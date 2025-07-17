@@ -41,7 +41,7 @@ jobs:
       - name: CloudFront Invalidate Cache
         run:
           | # 8.CloudFront 캐시 무효화 # (바로 아래 코드에 대한 메모)CloudFront 배포의 캐시를 강제로 무효화하는 AWS CLI 명령
-          aws cloudfront Create-invalidation \
+          aws cloudfront create-invalidation \
           --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}  \
           --paths "/*"
         env: # (바로 위 코드에 대한 메모) 모든 경로 캐시 무효화
