@@ -23,7 +23,7 @@ jobs:
       - name: Set environment variables # 4. .env 파일을 실행하고 GitHub Secrets 값을 환경 변수로 주입입
         run: |
           echo "VITE_ID=${{ secrets.VITE_ID }}" >> .env
-          echo "VITE PW=${{ secrets.VITE_PW }}" >> .env
+          echo "VITE_PW=${{ secrets.VITE_PW }}" >> .env
 
       - name: Build project # 5.정적 사이트 빌드 수행
         run: npm run build # Vite의 production 모드로 정적 파일 생성성
