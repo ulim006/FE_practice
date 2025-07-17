@@ -1,0 +1,49 @@
+name: CI/CD Deploy
+
+on:
+  push:
+    branches: [main] # main 브랜치에 push될 때만 실행됨됨
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest # 실행 환경은 최신 Ubutu 가상머신신
+
+    steps:
+      - name: Checkout source # 1.GitHub 저장소의 코드를 체크아웃
+        uses: actions/checkout@v3 # 현재 레포의 소스 코드를 가져옴옴
+
+      - name: Setup Node.js # 2.빌드를 위한 Node 환경 세팅
+        uses: actions/setup-node@v3 # Node.js 18 버전 사용용
+        with:
+          node-version: "18"
+
+      - name: Install dependencies # 3.프로젝트 의존성 설치치
+        run: npm ci # npm install보다 빠르고 안전전
+
+      - name: Set environment variables # 4. .env 파일을 실행하고 GitHub Secrets 값을 환경 변수로 주입입
+        run: |
+          echo "VITE_ID=${{ secrets.VITE_ID }}" >> .env
+          echo "VITE PW=${{ secrets.VITE_PW }}" >> .env
+
+      - name: Build project # 5.정적 사이트 빌드 수행
+        run: npm run build --mode production # Vite의 production 모드로 정적 파일 생성성
+
+      - name: configure AWS credentials # 6.AWS 자격 증명 설정
+        uses: aws-actions/configure-aws-credentials@v2 # AWS CLI 인증을 위해 사용용
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Deploy to S3 # 7. S3에 빌드된 정적 파일 업로드
+        run: aws s3 sync ./build s3://${{ secrets.S3_BUCKET_NAME }} --delete # ./build 폴더를 S3 버킷에 동기화(--delete 옵션은 S3에서 제거된 파일도 반영)
+
+      - name: CloudFront Invalidate Cache
+        run: | # 8.CloudFront 캐시 무효화 # (바로 아래 코드에 대한 메모)CloudFront 배포의 캐시를 강제로 무효화하는 AWS CLI 명령
+          aws cloudfront Create-invalidation \
+          --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}  \
+          --paths "/*"  
+        env: # (바로 위 코드에 대한 메모) 모든 경로 캐시 무효화
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ap-northeast-2
