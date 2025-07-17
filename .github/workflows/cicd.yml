@@ -26,7 +26,7 @@ jobs:
           echo "VITE PW=${{ secrets.VITE_PW }}" >> .env
 
       - name: Build project # 5.정적 사이트 빌드 수행
-        run: npm run build --mode production # Vite의 production 모드로 정적 파일 생성성
+        run: npm run build # Vite의 production 모드로 정적 파일 생성성
 
       - name: configure AWS credentials # 6.AWS 자격 증명 설정
         uses: aws-actions/configure-aws-credentials@v2 # AWS CLI 인증을 위해 사용용
@@ -39,10 +39,11 @@ jobs:
         run: aws s3 sync ./build s3://${{ secrets.S3_BUCKET_NAME }} --delete # ./build 폴더를 S3 버킷에 동기화(--delete 옵션은 S3에서 제거된 파일도 반영)
 
       - name: CloudFront Invalidate Cache
-        run: | # 8.CloudFront 캐시 무효화 # (바로 아래 코드에 대한 메모)CloudFront 배포의 캐시를 강제로 무효화하는 AWS CLI 명령
+        run:
+          | # 8.CloudFront 캐시 무효화 # (바로 아래 코드에 대한 메모)CloudFront 배포의 캐시를 강제로 무효화하는 AWS CLI 명령
           aws cloudfront Create-invalidation \
           --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}  \
-          --paths "/*"  
+          --paths "/*"
         env: # (바로 위 코드에 대한 메모) 모든 경로 캐시 무효화
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
